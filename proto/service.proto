@@ -5,11 +5,11 @@ option go_package = "https://github.com/anguud/DS_Mandatory_miniproject_3;proto"
 
 service project_bid {
     rpc bid (Amount) returns (Ack) {} 
-    rcp result () return (Outcome){}
+    rpc result (Message) returns (Outcome){}
 }
 
 message Amount {
-    int amount = 1;
+    int64 amount = 1;
     string client_id = 2; 
 }
 
@@ -18,6 +18,9 @@ message Ack {
 }
 
 message Outcome {
-    int highestBid = 1;
-    boo isAuctionOver = 2; 
+    int64 highestBid = 1;
+    bool isAuctionOver = 2; 
+}
+
+message Message {
 }
