@@ -5,15 +5,13 @@ import (
 	"log"
 	"net"
 
-	proto "github.com/emredogan/ds_mandatory_exercise_2/proto"
+	proto "github.com/anguud/DS_Mandatory_miniproject_3/proto"
 	"google.golang.org/grpc"
 )
 
 type server struct {
-	proto.UnimplementedMutualExclusionServer
-	queue            chan string
-	critical_section chan string
-	activeConnection string
+	highestbid    chan int64
+	isAuctionOver bool
 }
 
 func main() {

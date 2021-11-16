@@ -7,12 +7,12 @@ import (
 	"net"
 	"os"
 
-	proto "github.com/emredogan/ds_mandatory_exercise_2/proto"
+	proto "github.com/anguud/DS_Mandatory_miniproject_3/proto"
 	"google.golang.org/grpc"
 )
 
-var hasjoined bool
-var inSecret bool
+var amount int64
+var clients [3]proto.ProjectBidClient
 
 func main() {
 	conn, err := grpc.Dial(":9080", grpc.WithInsecure())
@@ -20,7 +20,23 @@ func main() {
 		log.Fatalf("Could not connect: %s", err)
 	}
 
-	client := proto.NewMutualExclusionClient(conn)
+	conn2, err := grpc.Dial(":9081", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("Could not connect: %s", err)
+	}
+
+	conn3, err := grpc.Dial(":9082", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("Could not connect: %s", err)
+	}
+
+
+	client1 := proto.NewProjectBidClient(conn)
+	client2 := proto.NewProjectBidClient(conn2)
+	client3 := proto.NewProjectBidClient(conn3)
+
+	clients := [client1, client2, client3];
+
 	ctx := context.Background()
 	defer disconnect(ctx, client)
 	scanner := bufio.NewScanner(os.Stdin)
@@ -29,9 +45,6 @@ func main() {
 		request := proto.Request{}
 		request.IpAddress = GetOutboundIP().String()
 		request.Message = scanner.Text()
-		if request.Message == "join" {
-			hasjoined = true
-		}
 
 		if hasjoined {
 			if inSecret && request.Message == "join" {
