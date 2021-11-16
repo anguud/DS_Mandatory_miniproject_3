@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"time"
 
 	proto "github.com/anguud/DS_Mandatory_miniproject_3/proto"
 	"google.golang.org/grpc"
@@ -37,29 +38,29 @@ func main() {
 	if err := grpc.Serve(list); err != nil {
 		log.Fatalf("failed to server %v", err)
 	}
-	// timer := time.NewTimer(30 * time.Second)
-	// // timer1 := time.NewTimer(2 * time.Second)
+	timer := time.NewTimer(30 * time.Second)
+	timer1 := time.NewTimer(2 * time.Second)
 
-	// go func() {
-	// 	for {
-	// 		<-timer.C
-	// 		server.isAuctionOver = true
-
-	// 	}
-	// }()
+	go func() {
+		for {
+			<-timer.C
+			server.isAuctionOver = true
+			<-timer1.C
+			server.isAuctionOver = false
+		}
+	}()
 
 }
 
 func (s *server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) {
 	response := ""
-	log.Println("printing somthing first")
 	if in.Amount <= s.highestbid {
 		response = "oh no bid: " + strconv.Itoa(int(in.Amount)) + " is not high enough"
-		log.Println("printing somthing else ")
+		log.Println("Bidder bid a amount smaller that highest bid.")
 	} else {
 		s.highestbid = in.Amount
 		response = "You know have the higste bid with your bid " + strconv.Itoa(int(in.Amount))
-		log.Println("printing somthing")
+		log.Println("new highet bid.")
 	}
 	return &proto.Ack{Response: response}, nil
 }

@@ -32,12 +32,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not connect: %s", err)
 	}
-
 	client1 := proto.NewProjectBidClient(conn)
 	client2 := proto.NewProjectBidClient(conn2)
 	client3 := proto.NewProjectBidClient(conn3)
-
-	clients := make([]proto.ProjectBidClient, 3, 3)
 
 	clients = append(clients, client1, client2, client3)
 
@@ -60,42 +57,52 @@ func main() {
 }
 
 func placeBid(amount int) {
-	log.Println("placing bid")
+	var errorcount = 0
 	response := ""
 	for _, client := range clients {
-		log.Println("client loop")
 		bid := proto.Amount{}
 		bid.Amount = int64(amount)
 		bid.ClientId = "id"
 
 		ack, err := client.Bid(ctx, &bid)
 		if err != nil {
-			log.Println(err)
+			errorcount = errorcount + 1
+			// log.Println(err)
+			continue
 		}
 		response = ack.Response
 	}
-	log.Println(response)
+	if errorcount < len(clients) {
+		log.Println(response)
+	} else {
+		log.Panicln("all replicas down")
+	}
 }
 
 func result() {
-
+	var errorcount = 0
 	highestbid := 0
 	auctionIsOver := false
 	message := proto.Message{}
 	for _, client := range clients {
-		log.Println(client)
 		res, err := client.Result(ctx, &message)
 		if err != nil {
-			log.Println(err)
+			errorcount = errorcount + 1
+			// log.Println(err)
+			continue
 		}
 		if int(res.HighestBid) > highestbid {
 			highestbid = int(res.HighestBid)
 			auctionIsOver = res.IsAuctionOver
 		}
 	}
-	if auctionIsOver {
-		log.Printf("Auction is over! Highest bid was %d", highestbid)
+	if errorcount < len(clients) {
+		if auctionIsOver {
+			log.Printf("Auction is over! Highest bid was %d", highestbid)
+		} else {
+			log.Printf("Auction is NOT over! Highest bid is currently %d", highestbid)
+		}
 	} else {
-		log.Printf("Auction is NOT over! Highest bid is currently %d", highestbid)
+		log.Panicln("all replicas down")
 	}
 }
