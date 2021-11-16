@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"log"
-	"net"
 	"os"
 	"strconv"
 
@@ -13,7 +13,9 @@ import (
 )
 
 var amount int64
-var clients [3]proto.ProjectBidClient
+
+var clients []proto.ProjectBidClient
+var ctx context.Context
 
 func main() {
 	conn, err := grpc.Dial(":9080", grpc.WithInsecure())
@@ -35,59 +37,65 @@ func main() {
 	client2 := proto.NewProjectBidClient(conn2)
 	client3 := proto.NewProjectBidClient(conn3)
 
-	append(clients, client1)
-	append(clients, client2)
-	append(clients, client3)
+	clients := make([]proto.ProjectBidClient, 3, 3)
 
-	ctx := context.Background()
+	clients = append(clients, client1, client2, client3)
 
-	for client := range clients {
+	ctx = context.Background()
 
-		defer disconnect(ctx, client)
-		scanner := bufio.NewScanner(os.Stdin)
-		for scanner.Scan() {
-			text := scanner.Text()
-			if text == "bid" {
-				amountString := scanner.Text()
-				amountInteger, _ := strconv.Atoi(amountString)
-
-				placeBid(amountInteger)
-
-			}
-
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		text := scanner.Text()
+		if text == "bid" {
+			fmt.Println("amount to bid:")
+			scanner.Scan()
+			amountString := scanner.Text()
+			amountInteger, _ := strconv.Atoi(amountString)
+			placeBid(amountInteger)
+		} else if text == "result" {
+			result()
 		}
 
 	}
 }
 
-func placeBid(int amount) {
+func placeBid(amount int) {
+	log.Println("placing bid")
+	response := ""
+	for _, client := range clients {
+		log.Println("client loop")
+		bid := proto.Amount{}
+		bid.Amount = int64(amount)
+		bid.ClientId = "id"
 
-}
-
-func disconnect(ctx context.Context, client proto.MutualExclusionClient) {
-	request := proto.Request{}
-	request.IpAddress = GetOutboundIP().String()
-	request.Message = "leave"
-
-	if inSecret {
-		_, err := client.RequestAccess(ctx, &request)
-
+		ack, err := client.Bid(ctx, &bid)
 		if err != nil {
 			log.Println(err)
 		}
+		response = ack.Response
 	}
-	log.Println("DISCONNECTED!" + request.IpAddress)
+	log.Println(response)
 }
 
-// Get preferred outbound ip of this machine
-func GetOutboundIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		log.Fatal(err)
+func result() {
+
+	highestbid := 0
+	auctionIsOver := false
+	message := proto.Message{}
+	for _, client := range clients {
+		log.Println(client)
+		res, err := client.Result(ctx, &message)
+		if err != nil {
+			log.Println(err)
+		}
+		if int(res.HighestBid) > highestbid {
+			highestbid = int(res.HighestBid)
+			auctionIsOver = res.IsAuctionOver
+		}
 	}
-	defer conn.Close()
-
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-
-	return localAddr.IP
+	if auctionIsOver {
+		log.Printf("Auction is over! Highest bid was %d", highestbid)
+	} else {
+		log.Printf("Auction is NOT over! Highest bid is currently %d", highestbid)
+	}
 }

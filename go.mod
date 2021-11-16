@@ -1,4 +1,4 @@
-module github.com/emredogan/ds_mandatory_exercise_2
+module github.com/anguud/DS_Mandatory_miniproject_3
 
 go 1.17
 

@@ -2,56 +2,69 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net"
+	"strconv"
 
 	proto "github.com/anguud/DS_Mandatory_miniproject_3/proto"
 	"google.golang.org/grpc"
 )
 
 type server struct {
-	highestbid    chan int64
+	highestbid    int64
 	isAuctionOver bool
+	proto.UnimplementedProjectBidServer
 }
 
+var port = flag.String("port", "9080", "Port for server")
+
 func main() {
-	list, err := net.Listen("tcp", ":9080")
+
+	flag.Parse()
+	portnumber := ":" + *port
+	list, err := net.Listen("tcp", portnumber)
 	if err != nil {
-		log.Fatalf("Failed to listen on port 9080: %v", err)
+		log.Fatalf("Failed to listen on port %s: %v", portnumber, err)
 	}
 	server := server{}
-	server.queue = make(chan string, 50)
-	server.critical_section = make(chan string, 1)
-	server.activeConnection = ""
+	server.highestbid = 0
+	server.isAuctionOver = false
 
 	grpc := grpc.NewServer()
-	proto.RegisterMutualExclusionServer(grpc, &server)
+	proto.RegisterProjectBidServer(grpc, &server)
 
 	if err := grpc.Serve(list); err != nil {
 		log.Fatalf("failed to server %v", err)
 	}
+	// timer := time.NewTimer(30 * time.Second)
+	// // timer1 := time.NewTimer(2 * time.Second)
+
+	// go func() {
+	// 	for {
+	// 		<-timer.C
+	// 		server.isAuctionOver = true
+
+	// 	}
+	// }()
 
 }
 
-func (s *server) RequestAccess(ctx context.Context, in *proto.Request) (*proto.Response, error) {
+func (s *server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) {
 	response := ""
-	if in.Message == "join" {
-		s.queue <- in.IpAddress
-		log.Println("Client joined the queue " + in.IpAddress)
-		s.critical_section <- (<-s.queue)
-		s.activeConnection = in.IpAddress
-		log.Println("Connected new client ", in.IpAddress)
-		response = "WELCOME TO CIA SECRET AREA" + in.IpAddress
-	} else if in.Message == "leave" {
-		if in.IpAddress == s.activeConnection {
-			leftClient := <-s.critical_section
-			log.Println("Connected client LEFT ", leftClient)
-			response = "LEFT THE CIA SECRET AREA " + in.IpAddress
-
-		} else {
-			log.Println("clien trying to leave not in the secret area ", in.IpAddress)
-			response = "Not currently in the secret area " + in.IpAddress
-		}
+	log.Println("printing somthing first")
+	if in.Amount <= s.highestbid {
+		response = "oh no bid: " + strconv.Itoa(int(in.Amount)) + " is not high enough"
+		log.Println("printing somthing else ")
+	} else {
+		s.highestbid = in.Amount
+		response = "You know have the higste bid with your bid " + strconv.Itoa(int(in.Amount))
+		log.Println("printing somthing")
 	}
-	return &proto.Response{Response: response}, nil
+	return &proto.Ack{Response: response}, nil
+}
+
+func (s *server) Result(ctx context.Context, in *proto.Message) (*proto.Outcome, error) {
+	log.Println("result request")
+	return &proto.Outcome{HighestBid: s.highestbid, IsAuctionOver: s.isAuctionOver}, nil
 }

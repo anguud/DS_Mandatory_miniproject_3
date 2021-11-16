@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package proto;
-option go_package = "https://github.com/anguud/DS_Mandatory_miniproject_3;proto";
+option go_package = "github.com/anguud/DS_Mandatory_miniproject_3;proto";
 
 service project_bid {
     rpc bid (Amount) returns (Ack) {} 
