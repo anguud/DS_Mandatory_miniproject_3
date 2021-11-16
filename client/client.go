@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 
 	proto "github.com/anguud/DS_Mandatory_miniproject_3/proto"
 	"google.golang.org/grpc"
@@ -45,14 +46,22 @@ func main() {
 		defer disconnect(ctx, client)
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
+			text := scanner.Text()
+			if text == "bid" {
+				amountString := scanner.Text()
+				amountInteger, _ := strconv.Atoi(amountString)
 
-			request := proto.Request{}
-			request.IpAddress = GetOutboundIP().String()
-			request.Message = scanner.Text()
+				placeBid(amountInteger)
+
+			}
 
 		}
 
 	}
+}
+
+func placeBid(int amount) {
+
 }
 
 func disconnect(ctx context.Context, client proto.MutualExclusionClient) {
