@@ -30,43 +30,29 @@ func main() {
 		log.Fatalf("Could not connect: %s", err)
 	}
 
-
 	client1 := proto.NewProjectBidClient(conn)
 	client2 := proto.NewProjectBidClient(conn2)
 	client3 := proto.NewProjectBidClient(conn3)
 
-	clients := [client1, client2, client3];
+	append(clients, client1)
+	append(clients, client2)
+	append(clients, client3)
 
 	ctx := context.Background()
-	defer disconnect(ctx, client)
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
 
-		request := proto.Request{}
-		request.IpAddress = GetOutboundIP().String()
-		request.Message = scanner.Text()
+	for client := range clients {
 
-		if hasjoined {
-			if inSecret && request.Message == "join" {
-				log.Println("Can't join whil in the secret section")
-			} else {
-				response, err := client.RequestAccess(ctx, &request)
+		defer disconnect(ctx, client)
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
 
-				if err != nil {
-					log.Fatal(err)
-				}
-				if response.Response == ("WELCOME TO CIA SECRET AREA" + string(request.IpAddress)) {
-					inSecret = true
-				} else if response.Response == ("LEFT THE CIA SECRET AREA" + string(request.IpAddress)) {
-					inSecret = false
-				}
-				log.Println(response)
-			}
-		} else {
-			log.Println("you have to try to join first in order to leave")
+			request := proto.Request{}
+			request.IpAddress = GetOutboundIP().String()
+			request.Message = scanner.Text()
+
 		}
-	}
 
+	}
 }
 
 func disconnect(ctx context.Context, client proto.MutualExclusionClient) {
