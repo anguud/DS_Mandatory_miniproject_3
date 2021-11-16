@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package proto;
+option go_package = "https://github.com/anguud/DS_Mandatory_miniproject_3;proto";
+
+service project_bid {
+    rpc bid (Amount) returns (Ack) {} 
+    rcp result () return (Outcome){}
+}
+
+message Amount {
+    int amount = 1;
+    string client_id = 2; 
+}
+
+message Ack {
+    string response = 1;
+}
+
+message Outcome {
+    int highestBid = 1;
+    boo isAuctionOver = 2; 
+}

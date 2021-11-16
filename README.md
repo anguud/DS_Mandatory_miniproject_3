@@ -1,2 +1,11 @@
-# DS_Mandatory_miniproject_3
-Hand-in for distributed system MiniProject 3 
+# mandatory exercises 2 
+
+run the following commands to run the server and clients 
+in different terminals run:
+```make serv```
+
+```make cl```
+
+
+to remake the proto generated files run 
+    ```make gen```
