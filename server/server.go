@@ -55,7 +55,7 @@ func (s *server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) 
 			log.Println("Bidder bid a amount smaller that highest bid.")
 		} else {
 			s.highestbid = in.Amount
-			response = "You know have the higste bid with your bid " + strconv.Itoa(int(in.Amount))
+			response = "You know have the highest bid with your bid " + strconv.Itoa(int(in.Amount))
 			log.Println("new highet bid.")
 		}
 
