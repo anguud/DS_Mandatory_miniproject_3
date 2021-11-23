@@ -48,22 +48,20 @@ func (s *server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) 
 	if s.isAuctionOver {
 		response = "You can't bit anymore, this auction is over!"
 	} else {
-		numberOfBids--
 
 		if in.Amount <= s.highestbid {
 			response = "oh no bid: " + strconv.Itoa(int(in.Amount)) + " is not high enough"
 			log.Println("Bidder bid a amount smaller that highest bid.")
 		} else {
-			s.highestbid = in.Amount
-			response = "You know have the highest bid with your bid " + strconv.Itoa(int(in.Amount))
-			log.Println("new highest bid.")
-		}
-
-		if numberOfBids == 0 || s.highestbid >= int64(maxBid) {
-			s.isAuctionOver = true
-			if s.highestbid >= int64(maxBid) {
+			numberOfBids--
+			if numberOfBids == 0 || s.highestbid >= int64(maxBid) {
+				s.isAuctionOver = true
 				response = "You know have the highest bid with your bid " + strconv.Itoa(int(in.Amount)) + " and auction is over"
-
+				log.Println("Auction is now over")
+			} else {
+				s.highestbid = in.Amount
+				response = "You know have the highest bid with your bid " + strconv.Itoa(int(in.Amount))
+				log.Println("new highest bid.")
 			}
 		}
 
