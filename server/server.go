@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"strconv"
-	"time"
 
 	proto "github.com/anguud/DS_Mandatory_miniproject_3/proto"
 	"google.golang.org/grpc"
@@ -19,6 +18,8 @@ type server struct {
 }
 
 var port = flag.String("port", "9080", "Port for server")
+var numberOfBids = 3
+var maxBid = 999
 
 func main() {
 
@@ -38,30 +39,36 @@ func main() {
 	if err := grpc.Serve(list); err != nil {
 		log.Fatalf("failed to server %v", err)
 	}
-	timer := time.NewTimer(30 * time.Second)
-	timer1 := time.NewTimer(2 * time.Second)
-
-	go func() {
-		for {
-			<-timer.C
-			server.isAuctionOver = true
-			<-timer1.C
-			server.isAuctionOver = false
-		}
-	}()
 
 }
 
 func (s *server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) {
 	response := ""
-	if in.Amount <= s.highestbid {
-		response = "oh no bid: " + strconv.Itoa(int(in.Amount)) + " is not high enough"
-		log.Println("Bidder bid a amount smaller that highest bid.")
+
+	if s.isAuctionOver {
+		response = "You can't bit anymore, this auction is over!"
 	} else {
-		s.highestbid = in.Amount
-		response = "You know have the higste bid with your bid " + strconv.Itoa(int(in.Amount))
-		log.Println("new highet bid.")
+		numberOfBids--
+
+		if in.Amount <= s.highestbid {
+			response = "oh no bid: " + strconv.Itoa(int(in.Amount)) + " is not high enough"
+			log.Println("Bidder bid a amount smaller that highest bid.")
+		} else {
+			s.highestbid = in.Amount
+			response = "You know have the higste bid with your bid " + strconv.Itoa(int(in.Amount))
+			log.Println("new highet bid.")
+		}
+
+		if numberOfBids == 0 || s.highestbid >= int64(maxBid) {
+			s.isAuctionOver = true
+			if s.highestbid >= int64(maxBid) {
+				response = "You know have the highest bid with your bid " + strconv.Itoa(int(in.Amount)) + " and auction is over"
+
+			}
+		}
+
 	}
+
 	return &proto.Ack{Response: response}, nil
 }
 
