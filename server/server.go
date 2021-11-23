@@ -56,7 +56,7 @@ func (s *server) Bid(ctx context.Context, in *proto.Amount) (*proto.Ack, error) 
 		} else {
 			s.highestbid = in.Amount
 			response = "You know have the highest bid with your bid " + strconv.Itoa(int(in.Amount))
-			log.Println("new highet bid.")
+			log.Println("new highest bid.")
 		}
 
 		if numberOfBids == 0 || s.highestbid >= int64(maxBid) {
