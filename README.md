@@ -21,10 +21,10 @@ Clients
 Clients can use two commands in terminal:
 use bid to make a bid
 
-'''bid'''
+```bid```
 
 after bid has been run the apllication will ask for an amount to bid.
 
 use result to query for the state of the auction
 
-'''result'''
+```result```
